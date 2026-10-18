@@ -10,3 +10,4 @@ File_Pair_Preview.txt
 _File_Pair_Cleaner_Backup_*/
 _MP3_LRC_Backup_*/
 *.log
+dist/

@@ -1,0 +1,32 @@
+name: Publish v2.2.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify application tests
+        run: python -m unittest -q test_cleaner.py
+      - name: Install PDF builder (release workflow only)
+        run: python -m pip install 'reportlab>=4.0,<5'
+      - name: Build release assets
+        run: python scripts/build_release.py
+      - name: Publish v2.2.0 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v2.2.0 dist/Duplicate-Pair-Cleaner-v2.2.0-Windows.zip dist/Duplicate-Pair-Cleaner-v2.2.0-User-Manual.pdf --target "$GITHUB_SHA" --title "Duplicate Pair Cleaner v2.2.0 - First Public Release" --notes-file docs/RELEASE_NOTES_v2.2.0.md --latest
