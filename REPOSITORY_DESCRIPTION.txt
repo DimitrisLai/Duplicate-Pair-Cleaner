@@ -1,0 +1,1 @@
+Safe filename-based duplicate cleaner that preserves matching file pairs. Choose extensions, preview grouped changes, and back up extras. Python 3.10+.

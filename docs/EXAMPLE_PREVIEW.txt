@@ -1,0 +1,39 @@
+This is a FICTIONAL sample of the grouped preview (not a scan of anyone's files).
+
+=============================================================================
+DUPLICATE PAIR CLEANER v2.2.0 | PREVIEW: NOTHING HAS CHANGED
+Folder: C:\Music\Samples
+Main extension: .mp3 | Companion extension: .lrc
+Include subfolders: NO
+Groups: 2 | Files to back up: 3 | Renames: 2
+Status: [KEEP] unchanged | [BACKUP] saved, not deleted | [RENAME] new filename
+=============================================================================
+
+-----------------------------------------------------------------------------
+GROUP 001/002 | Sample Song
+Why: Keeping the main file with its matching companion.
+CURRENT FILES / DECISIONS:
+  [BACKUP] Sample Song.mp3
+  [RENAME] Sample Song(1).mp3
+           -> Sample Song.mp3
+  [RENAME] Sample Song(1).lrc
+           -> Sample Song.lrc
+AFTER CLEANUP:
+  [MAIN .mp3] Sample Song.mp3
+  [PAIR .lrc] Sample Song.lrc
+
+-----------------------------------------------------------------------------
+GROUP 002/002 | Another Song
+Why: Multiple complete pairs: keeping the unnumbered pair.
+CURRENT FILES / DECISIONS:
+  [KEEP]   Another Song.mp3
+  [KEEP]   Another Song.lrc
+  [BACKUP] Another Song(1).mp3
+  [BACKUP] Another Song(1).lrc
+AFTER CLEANUP:
+  [MAIN .mp3] Another Song.mp3
+  [PAIR .lrc] Another Song.lrc
+
+=============================================================================
+TOTAL: 2 groups | 3 files backed up | 2 renames
+All other files are untouched. This was a preview of the plan.
