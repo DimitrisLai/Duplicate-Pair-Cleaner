@@ -22,7 +22,7 @@ Duplicate Pair Cleaner is a lightweight open-source Python utility that cleans f
 
 ## Quick start (Windows)
 
-1. Download the Windows ZIP from [GitHub Releases](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases), when available. Alternatively, download the source repository ZIP using **Code > Download ZIP**.
+1. Download the [Windows ZIP for v2.2.0](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v2.2.0/Duplicate-Pair-Cleaner-v2.2.0-Windows.zip). Alternatively, download the source repository ZIP using **Code > Download ZIP**.
 2. Install [Python 3.10 or newer](https://www.python.org/downloads/) and **extract** the ZIP first.
 3. Double-click **Preview_Only.bat** to see a report with **no changes to selected files**.
 4. Select your folder, pick the two file extensions and choose whether to include subfolders.
@@ -81,7 +81,7 @@ python -m unittest -v test_cleaner.py
 
 ## Documentation
 
-- [Read the complete illustrated user manual](docs/USER_GUIDE.md)
+- [Download the illustrated 9-page PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v2.2.0/Duplicate-Pair-Cleaner-v2.2.0-User-Manual.pdf) · [Read the text guide](docs/USER_GUIDE.md)
 - [Example of grouped cleanup decisions](docs/EXAMPLE_PREVIEW.txt)
 - [Changelog](CHANGELOG.md) and [v2.2.0 release notes](docs/RELEASE_NOTES_v2.2.0.md)
 - [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md)
