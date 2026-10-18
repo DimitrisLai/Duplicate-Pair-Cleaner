@@ -23,7 +23,7 @@ jobs:
       - name: Verify application tests
         run: python -m unittest -q test_cleaner.py
       - name: Install PDF builder for CI only
-        run: python -m pip install 'reportlab>=4.0,<5'
+        run: python -m pip install 'reportlab>=4.0,<5' 'pypdf>=5,<7'
       - name: Build polished PDF and Windows package
         run: python scripts/build_release.py
       - name: Check nine-page PDF and ZIP integrity
