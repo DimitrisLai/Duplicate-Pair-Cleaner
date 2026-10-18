@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/publish.yml'
+      - 'scripts/build_release.py'
   workflow_dispatch:
 
 permissions:
@@ -21,12 +22,26 @@ jobs:
           python-version: '3.13'
       - name: Verify application tests
         run: python -m unittest -q test_cleaner.py
-      - name: Install PDF builder (release workflow only)
+      - name: Install PDF builder for CI only
         run: python -m pip install 'reportlab>=4.0,<5'
-      - name: Build release assets
+      - name: Build polished PDF and Windows package
         run: python scripts/build_release.py
-      - name: Publish v2.2.0 release
+      - name: Check nine-page PDF and ZIP integrity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          from pypdf import PdfReader
+          pdf = next(Path('dist').glob('*.pdf'))
+          archive = next(Path('dist').glob('*.zip'))
+          assert len(PdfReader(str(pdf)).pages) == 9, 'PDF is not nine pages'
+          with ZipFile(archive) as z:
+              assert z.testzip() is None
+              assert 'file_pair_cleaner.py' in z.namelist()
+          print('PDF and ZIP checks passed')
+          PY
+      - name: Update existing published release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v2.2.0 dist/Duplicate-Pair-Cleaner-v2.2.0-Windows.zip dist/Duplicate-Pair-Cleaner-v2.2.0-User-Manual.pdf --target "$GITHUB_SHA" --title "Duplicate Pair Cleaner v2.2.0 - First Public Release" --notes-file docs/RELEASE_NOTES_v2.2.0.md --latest
+          gh release upload v2.2.0 dist/Duplicate-Pair-Cleaner-v2.2.0-Windows.zip dist/Duplicate-Pair-Cleaner-v2.2.0-User-Manual.pdf --clobber
