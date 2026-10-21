@@ -17,7 +17,7 @@ import shutil
 import sys
 import uuid
 
-VERSION = "2.2.0"
+VERSION = "3.0.0"
 BACKUP_PREFIX = "_File_Pair_Cleaner_Backup_"
 OLD_BACKUP_PREFIX = "_MP3_LRC_Backup_"
 # Numbered-copy suffixes at the END of a stem only. (Live), (2026), etc. are untouched.

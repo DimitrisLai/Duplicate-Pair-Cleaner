@@ -1,23 +1,14 @@
 # Changelog
 
-## [2.2.0] — 2026-10-18 — Public release
-- Rebranded for `DimitrisLai/Duplicate-Pair-Cleaner` with MIT license.
-- Added best-effort rollback on Ctrl+C.
-- Check for destinations occupied after preview before touching source files.
-- Verify retained files exist before writing the success manifest.
-- Expanded regression suite to 34 tests and published documentation.
+## v3.0.0 — 2026-10-21 — Desktop GUI
+- Added modern Windows GUI with folder selection, companion extension presets, grouped previews, filters, export, protected cleanup and backup opening.
+- Kept original filename-selection algorithm, preview safeguards, dated backups and recovery logic.
+- Added GUI-model regression tests and cross-platform checks.
+- Added reproducible Windows PyInstaller release build and redesigned GUI user manual.
+- No permanent file deletion option in the GUI.
 
-## [2.1.0] — 2026-10-18
-- Initial GitHub package, improved scan speed and backup handling.
+## v2.2.0 — 2026-10-18 — Stable CLI release
+- Original numbered-copy cleaner with custom extensions, grouped console preview, backups, collision checks and rollback.
+- Shipped MIT license, tests, CLI scripts and documentation.
 
-## [2.0.0] — 2026-10-18
-- Configurable main and companion extensions.
-
-## [1.0.2] — 2026-10-18
-- Folder picker.
-
-## [1.0.1] — 2026-10-18
-- Grouped, paged previews.
-
-## [1.0.0] — 2026-10-18
-- Original MP3/LRC duplicate cleaner with backups.
+All prior releases remain available in GitHub Releases.

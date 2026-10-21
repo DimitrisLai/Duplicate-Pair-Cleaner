@@ -230,7 +230,7 @@ class PairCleanerTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as result:
             c.main(['--version'])
         self.assertEqual(0, result.exception.code)
-        self.assertIn('2.2.0', output.getvalue())
+        self.assertIn('3.0.0', output.getvalue())
 
     def test_skip_git_and_virtualenv_directories(self):
         self.put('.git/Song.mp3', '.git/Song(1).mp3',

@@ -1,92 +1,82 @@
 # Duplicate Pair Cleaner
 
-**Safely remove numbered duplicate files while preserving matching companion files.**
+**Smart, safe duplicate cleanup. Now with a real Windows interface.**
 
-![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![MIT License](https://img.shields.io/badge/License-MIT-green)
-[![Tests](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/actions/workflows/tests.yml/badge.svg)](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/actions/workflows/tests.yml)
+[![Python tests](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/actions/workflows/tests.yml/badge.svg)](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/actions/workflows/tests.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-07988B)](LICENSE)
+[![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0B172B)](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases)
 
-Duplicate Pair Cleaner is a lightweight open-source Python utility that cleans filenames ending in **(1)**, **(2)**, **(3)**, etc. Unlike simple duplicate cleaners, it prefers copies with matching companion files, such as song lyrics, subtitles, or photo metadata.
+Duplicate Pair Cleaner consolidates numbered duplicates like `Song(1).mp3` while **keeping the version with matching lyrics, subtitles or other companion files**. It protects your files using previews, explicit confirmation and dated backup folders.
 
-**No third-party Python dependencies. No ads, tracking, file uploads, or internet connection.**
+## Download
 
-## Features
+**[Download the latest Windows GUI (v3.0.0)](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.0.0)**. Download the portable Windows ZIP, **extract everything**, then run `DuplicatePairCleaner.exe` inside the extracted `DuplicatePairCleaner` folder. **No Python installation required** for the compiled EXE. Unsigned releases may trigger Windows SmartScreen.
 
-- Pick **any two extensions**: default `.mp3 + .lrc`, or choose `.mp4 + .srt`, `.jpg + .xmp`, `.flac + .lrc`, and many more.
-- Choose **any folder** with a Windows folder browser; no copying the script into each folder.
-- Optional recursive scanning. Each subfolder is handled independently.
-- **Grouped previews** showing KEEP, BACKUP, RENAME and final filenames.
-- Keep the main file with a matching companion when possible; otherwise prefer an unnumbered file.
-- **Back up duplicates by default**, with a JSON manifest and rollback attempts on errors.
-- Safe Windows launchers, a command-line interface, and a 34-test regression suite.
+The older [v2.2.0 command-line release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v2.2.0) remains available.
 
-## Quick start (Windows)
+## What you can do
 
-1. Download the [Windows ZIP for v2.2.0](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v2.2.0/Duplicate-Pair-Cleaner-v2.2.0-Windows.zip). Alternatively, download the source repository ZIP using **Code > Download ZIP**.
-2. Install [Python 3.10 or newer](https://www.python.org/downloads/) and **extract** the ZIP first.
-3. Double-click **Preview_Only.bat** to see a report with **no changes to selected files**.
-4. Select your folder, pick the two file extensions and choose whether to include subfolders.
-5. Review the grouped results. To apply, double-click **Run_Cleaner.bat**, repeat the review and type exactly **YES**.
-
-**Review keys:** Enter = next five groups; A = show all remaining groups; Q = cancel.
+- Select any folder using the Windows folder browser; optionally include subfolders.
+- Choose preset pairs `.mp3 + .lrc`, `.mp4 + .srt`, `.flac + .lrc`, `.jpg + .xmp`, `.wav + .txt`, or enter your own extensions.
+- **Scan & preview** safely before touching your files.
+- Review every affected file group, with KEEP, BACKUP, RENAME and final names.
+- Search and filter by whether a matching companion is present.
+- Export an unfiltered text preview report.
+- Confirm changes deliberately and keep automatic backups. Open the backup folder after completion.
+- Run offline, without accounts, ads or telemetry.
 
 ## Example
 
 **Before:**
+
 ```text
-Morning Lights - Demo Artist.mp3
-Morning Lights - Demo Artist(1).mp3
-Morning Lights - Demo Artist(1).lrc
+Song - Demo Artist.mp3
+Song - Demo Artist(1).mp3
+Song - Demo Artist(1).lrc
 ```
 
 **After:**
+
 ```text
-Morning Lights - Demo Artist.mp3
-Morning Lights - Demo Artist.lrc
+Song - Demo Artist.mp3  # formerly Song - Demo Artist(1).mp3
+Song - Demo Artist.lrc  # formerly Song - Demo Artist(1).lrc
 ```
 
-The kept MP3 contains the **former (1) copy**. The old unnumbered MP3 is moved into a dated backup folder. The matching LRC is renamed. If both complete pairs exist, the unnumbered pair wins. If neither MP3 has an LRC, the unnumbered MP3 wins.
+The previously unnumbered MP3 is stored in the dated backup folder, **not deleted**.
 
-## Rules and limitations
+## How the selection works
 
-1. Recognizes copy suffixes `(1)` through `(999)` at the **end** of a filename stem, optionally preceded by a space. Ordinary parentheses such as `(Live)` or `(2026)` are not considered duplicate numbering.
-2. Groups names **case-insensitively** but preserves the selected filename's capitalization.
-3. Chooses a main file with a matching companion first; prefers unnumbered pairs, then lower copy numbers.
-4. Keeps one companion where available, even when its number does not match any main file.
-5. Single `(1)` files or single complete `(1)` pairs are left alone, because the suffix may be intentional.
-6. Only the two selected file extensions are modified. Extra files and unrelated formats are untouched.
-7. Scan results are based on **filenames, not file contents or hashes**. Two recordings with the same title could actually be different. Always review the preview first.
+The algorithm prefers a main file with a companion bearing the same suffix number; it prefers the unnumbered pair if both are complete, otherwise the lowest numbered complete pair. If no matched pair exists, it prefers the unnumbered main file while keeping at most one available companion. A lone `Song(1).mp3`, or a lone numbered complete pair, is left untouched. Descriptive parentheses such as `(Live)` or `(2026)` are not duplicate suffixes. Files are grouped case-insensitively within **each directory separately**.
 
-**Backups:** Unwanted files are moved to `_File_Pair_Cleaner_Backup_<timestamp>/duplicates/`. The folder contains `manifest.json` recording moved and renamed files. Restore manually as needed; no automatic restore command is provided. Keep an additional backup for important data. Power loss may interrupt filesystem operations.
+**Important:** filenames are compared, not media contents or hashes. Always inspect your preview first. Keep a separate backup of irreplaceable files.
 
-The included BAT files **do not enable permanent deletion**. The optional advanced `--permanent` flag exists only on the command line, and is not recommended.
+## Source and development
 
-## Command line
+Python 3.10+ and Tkinter are the only requirements for running source GUI:
 
-```sh
-# Read-only preview
-python file_pair_cleaner.py --folder "/path/to/files" --preview
-
-# Choose extensions and scan subfolders
-python file_pair_cleaner.py --folder "/path/to/videos" --main-ext mp4 --companion-ext srt --recursive --preview
-
-# Windows folder picker with prompts
-python file_pair_cleaner.py --select-folder --ask-extensions --ask-subfolders
-
-# Help, version and tests
-python file_pair_cleaner.py --help
-python file_pair_cleaner.py --version
-python -m unittest -v test_cleaner.py
+```bash
+python gui_app.py
 ```
 
-## Documentation
+The classic CLI is still available:
 
-- [Download the illustrated 9-page PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v2.2.0/Duplicate-Pair-Cleaner-v2.2.0-User-Manual.pdf) · [Read the text guide](docs/USER_GUIDE.md)
-- [Example of grouped cleanup decisions](docs/EXAMPLE_PREVIEW.txt)
-- [Changelog](CHANGELOG.md) and [v2.2.0 release notes](docs/RELEASE_NOTES_v2.2.0.md)
-- [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md)
-- [Open an issue](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/issues) with **fictional filenames**, not a personal file inventory.
+```bash
+python file_pair_cleaner.py --folder "C:/Music" --main-ext mp3 --companion-ext lrc --preview
+```
 
-## License
+Run all automated tests:
 
-Copyright © 2026 **DimitrisLai**. Released under the [MIT License](LICENSE). The program is provided as-is, without warranty.
+```bash
+python -m unittest discover -v -p 'test*.py'
+```
+
+The GUI source, GUI state model, cleaning core, manual generator and Windows packaging workflow are committed to this repository. The executable is built **on a Windows GitHub runner**, not cross-compiled on Linux.
+
+## Documentation and help
+
+- [Graphical interface guide](docs/GUI_USER_GUIDE.md)
+- [PDF manual (v3.0.0 GitHub release)](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.0.0)
+- [Changelog](CHANGELOG.md) / [Release notes](docs/RELEASE_NOTES_v3.0.0.md)
+- [Report an issue](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/issues) with synthetic filenames only
+
+Licensed under [MIT](LICENSE), by **DimitrisLai**.
