@@ -117,8 +117,8 @@ jobs:
           if-no-files-found: error
           overwrite: true
           retention-days: 90
-      - name: Publish v3.0.0
+      - name: Attempt GitHub Release publication
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v3.0.0 Duplicate-Pair-Cleaner-v3.0.0-Windows-Portable.zip stage/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf --target "$GITHUB_SHA" --title 'Duplicate Pair Cleaner v3.0.0 - Final Windows GUI' --notes-file docs/RELEASE_NOTES_v3.0.0.md --latest
+          gh release create v3.0.0 Duplicate-Pair-Cleaner-v3.0.0-Windows-Portable.zip stage/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf --target "$GITHUB_SHA" --title 'Duplicate Pair Cleaner v3.0.0 - Final Windows GUI' --notes-file docs/RELEASE_NOTES_v3.0.0.md --latest || { echo "::warning::Release publishing is restricted; the verified Windows ZIP is available as an Actions artifact."; echo "Publishing permission must be enabled for a permanent Release." >> "$GITHUB_STEP_SUMMARY"; }
