@@ -10,7 +10,7 @@ Duplicate Pair Cleaner consolidates numbered duplicates like `Song(1).mp3` while
 
 ## Download
 
-**Windows GUI v3.0.0 is built and verified**, but permanent GitHub Release publishing currently requires repository workflow write permission. Until that is enabled, open [the Windows GUI build workflow](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/actions/workflows/publish_gui.yml), select the latest build, and download the `windows-portable-v3.0.0` artifact from its **Artifacts** section (sign-in may be required; build artifacts expire). Extract the portable ZIP and run `DuplicatePairCleaner.exe` inside the `DuplicatePairCleaner` folder. **No separate Python installation is needed.** The build is unsigned and may trigger Windows SmartScreen.
+**[Download Windows GUI v3.0.0](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.0.0)**. Download the Windows-Portable ZIP, **extract all files**, then run `DuplicatePairCleaner.exe` inside the extracted `DuplicatePairCleaner` folder. The compiled app does **not require a separate Python installation**. The build is unsigned and may trigger Windows SmartScreen.
 
 The older [v2.2.0 command-line release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v2.2.0) remains available.
 
@@ -75,7 +75,7 @@ The GUI source, GUI state model, cleaning core, manual generator and Windows pac
 ## Documentation and help
 
 - [Graphical interface guide](docs/GUI_USER_GUIDE.md)
-- [Download the permanent nine-page PDF manual](docs/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf)
+- [Download the official nine-page PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v3.0.0/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf) · [Repository copy](docs/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf)
 - [Changelog](CHANGELOG.md) / [Release notes](docs/RELEASE_NOTES_v3.0.0.md)
 - [Report an issue](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/issues) with synthetic filenames only
 
