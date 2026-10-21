@@ -14,6 +14,16 @@ Duplicate Pair Cleaner consolidates numbered duplicates like `Song(1).mp3` while
 
 The older [v2.2.0 command-line release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v2.2.0) remains available.
 
+## Code signing policy and Windows SmartScreen
+
+**Current Windows portable release is unsigned.** Windows may show the blue **“Windows protected your PC / Unknown publisher”** warning. This is a publisher-reputation warning, not proof that the file contains malware.
+
+We are [preparing free open-source code signing](CODE_SIGNING_POLICY.md), subject to third-party approval. No certificate or SmartScreen exemption has been granted yet. Even a new legitimately signed release may show a warning while reputation develops. [Microsoft Store-distributed MSIX packages](https://learn.microsoft.com/windows/apps/package-and-deploy/smartscreen-reputation) are a separate distribution route that avoids SmartScreen download warnings for Store installs.
+
+Only download this utility from the project's official [GitHub Releases](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases). Never disable Windows security protections globally just to run the app.
+
+
+
 ## What you can do
 
 - Select any folder using the Windows folder browser; optionally include subfolders.
