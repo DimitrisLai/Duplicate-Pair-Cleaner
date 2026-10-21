@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'release/v3-source-bundle.b64'
+      - '.github/workflows/bootstrap_gui.yml'
 permissions:
   contents: write
   actions: write
@@ -40,6 +41,10 @@ jobs:
           PY
       - name: Verify 42 tests
         run: python -m unittest -q test_cleaner.py test_gui_logic.py
+      - name: Leave workflow files to the authenticated GitHub connection
+        run: |
+          git restore .github/workflows/tests.yml
+          rm -f .github/workflows/publish_gui.yml
       - name: Commit reviewed GUI source
         run: |
           git config user.name 'github-actions[bot]'
@@ -48,7 +53,5 @@ jobs:
           git rm -f release/v3-source-bundle.b64
           git commit -m 'Add v3.0.0 Windows GUI, documentation, tests and build workflow'
           git push origin HEAD:main
-      - name: Start Windows GUI build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run publish_gui.yml --ref main
+      - name: Next step
+        run: echo 'GUI source committed; Windows release workflow is uploaded separately.'
