@@ -1,22 +1,13 @@
-# Publishing v2.2.0
+# Publishing Duplicate Pair Cleaner
 
-Repository: https://github.com/DimitrisLai/Duplicate-Pair-Cleaner
+The Windows GUI is released as **v3.0.0**. The portable EXE is built by a GitHub-hosted Windows runner, not cross-compiled on Linux.
 
-The source, tests, launchers, documentation and MIT license are committed on `main`.
+1. Run the full core and GUI-model test suite: `python -m unittest -v test_cleaner.py test_gui_logic.py`.
+2. Review `gui_app.py`, `gui_logic.py`, `docs/GUI_USER_GUIDE.md`, and `scripts/build_manual.py`.
+3. If a new build is needed, select **Actions → Windows GUI v3.0.0 → Run workflow**. It runs Windows/Linux tests, packages the EXE with PyInstaller, builds the nine-page PDF manual, and publishes the portable Windows ZIP.
+4. The workflow creates the `v3.0.0` tag and release if they do not already exist. Publish a **new version** for future changes rather than silently overwriting prior releases.
+5. Verify the two public assets (Windows-Portable ZIP and PDF) and test the extracted EXE on a real Windows 10/11 desktop.
 
-## To publish the public Windows download
-1. Open https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/new
-2. Create a new tag `v2.2.0` from `main`.
-3. Release title: `Duplicate Pair Cleaner v2.2.0 — First Public Release`.
-4. Paste the content of `docs/RELEASE_NOTES_v2.2.0.md`.
-5. Attach `Duplicate-Pair-Cleaner-v2.2.0-Windows.zip` from the prepared release kit.
-6. Attach the nine-page PDF user manual if desired.
-7. Publish and verify the download in a private browser window.
+The previous v2.2.0 command-line release is retained separately, including its historical publishing workflow. The GUI release is unsigned and may trigger Windows SmartScreen.
 
-## Suggested repository description
-Safe filename-based duplicate cleaner that preserves matching file pairs. Choose extensions, preview grouped changes, and back up extras. Python 3.10+.
-
-## Suggested topics
-python, duplicate-files, file-organizer, file-management, deduplication, lyrics, lrc, subtitles, sidecar-files, windows, cli, backup, open-source
-
-Use the GitHub repository **About** section to set description and topics. Topics are not the same as Git release tags.
+MIT License — DimitrisLai.
