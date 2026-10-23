@@ -8,32 +8,32 @@
 
 Duplicate Pair Cleaner consolidates numbered duplicates like `Song(1).mp3` while **keeping the version with matching lyrics, subtitles or other companion files**. It protects your files using previews, explicit confirmation and dated backup folders.
 
+## Project status — Feature-complete for 2026
+
+**v3.5.0 is the final planned feature release for 2026.** As of October 23, 2026, no further feature updates or scheduled releases are planned through **December 31, 2026**.
+
+The project remains **public, available to download, and MIT-licensed**. Issues and pull requests can still be submitted, but there is no commitment to a feature roadmap or a regular update schedule. Important security or critical bug fixes, compatibility corrections, or code-signing changes may be published if necessary. Development may be reconsidered in **2027**.
+
+This is a **feature-complete / maintenance-only status**, not an archived or abandoned repository.
+
 ## Download
 
-**[Download Windows GUI v3.1.0](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.1.0)**. Download the Windows-Portable ZIP, **extract all files**, then run `DuplicatePairCleaner.exe` inside the extracted `DuplicatePairCleaner` folder. The compiled app does **not require a separate Python installation**. The build is unsigned and may trigger Windows SmartScreen.
+**[Download the latest Windows GUI (v3.5.0)](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.5.0)**. Download the portable Windows ZIP, **extract everything**, then run `DuplicatePairCleaner.exe` inside the extracted `DuplicatePairCleaner` folder. **No Python installation required** for the compiled EXE. Unsigned releases may trigger Windows SmartScreen.
 
-The older [v2.2.0 command-line release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v2.2.0) remains available.
-
-## Code signing policy and Windows SmartScreen
-
-**Current Windows portable release is unsigned.** Windows may show the blue **“Windows protected your PC / Unknown publisher”** warning. This is a publisher-reputation warning, not proof that the file contains malware.
-
-We are [preparing free open-source code signing](CODE_SIGNING_POLICY.md), subject to third-party approval. No certificate or SmartScreen exemption has been granted yet. Even a new legitimately signed release may show a warning while reputation develops. [Microsoft Store-distributed MSIX packages](https://learn.microsoft.com/windows/apps/package-and-deploy/smartscreen-reputation) are a separate distribution route that avoids SmartScreen download warnings for Store installs.
-
-Only download this utility from the project's official [GitHub Releases](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases). Never disable Windows security protections globally just to run the app.
-
-
+The previous [v3.0.0 GUI release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.0.0) and the older [v2.2.0 command-line release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v2.2.0) remain available.
 
 ## What you can do
 
-- Choose **Light**, **Dark**, or **System** appearance in the GUI. Your selection persists between launches; changing it never alters a cleanup plan.
-
+- **Appearance:** choose Light, Dark (near-black), or System (follows Windows), with your preference remembered between launches. Changing the theme never changes a cleanup plan.
+- **Remembered choices:** last valid folder, pair extensions, preset, subfolder setting, and theme are restored between launches. Opening the app never starts a scan automatically.
+- **Cancel scan:** safely cancel a large read-only scan or request cancellation before closing, with no partial results or file changes.
+- **Selective cleanup:** exclude or include complete duplicate groups, filter by inclusion, or toggle all. Only included groups are backed up or renamed.
 - Select any folder using the Windows folder browser; optionally include subfolders.
 - Choose preset pairs `.mp3 + .lrc`, `.mp4 + .srt`, `.flac + .lrc`, `.jpg + .xmp`, `.wav + .txt`, or enter your own extensions.
 - **Scan & preview** safely before touching your files.
 - Review every affected file group, with KEEP, BACKUP, RENAME and final names.
 - Search and filter by whether a matching companion is present.
-- Export an unfiltered text preview report.
+- Export a text preview report listing selected changes and explicitly excluded groups.
 - Confirm changes deliberately and keep automatic backups. Open the backup folder after completion.
 - Run offline, without accounts, ads or telemetry.
 
@@ -87,8 +87,8 @@ The GUI source, GUI state model, cleaning core, manual generator and Windows pac
 ## Documentation and help
 
 - [Graphical interface guide](docs/GUI_USER_GUIDE.md)
-- [Download the v3.1 nine-page PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v3.1.0/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf) · [Repository copy](docs/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf)
-- [Changelog](CHANGELOG.md) / [Release notes](docs/RELEASE_NOTES_v3.1.0.md)
+- [Download the nine-page v3.5.0 PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v3.5.0/Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf) · [Repository text guide](docs/GUI_USER_GUIDE.md)
+- [Changelog](CHANGELOG.md) / [Release notes](docs/RELEASE_NOTES_v3.5.0.md)
 - [Report an issue](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/issues) with synthetic filenames only
 
-Licensed under [MIT](LICENSE), by **DimitrisLai**.
+Copyright © 2026 **Dimitris Laidis**. Licensed under [MIT](LICENSE).

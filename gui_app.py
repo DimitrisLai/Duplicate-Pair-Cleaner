@@ -10,6 +10,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from gui_logic import APP_VERSION, ScanResult, scan
+from gui_prefs import load_preferences, save_preferences
+from file_pair_cleaner import ScanCancelled
 from theme_prefs import MODES, load_theme, save_theme, resolve_mode, recolor
 
 NAVY = '#0B172B'
@@ -53,6 +55,9 @@ class MainWindow(tk.Tk):
         self._selected_group = None
         self._last_backup: Path | None = None
         self._row_groups = {}
+        self._excluded_groups: set[Path] = set()
+        self._scan_cancel_event: threading.Event | None = None
+        self._close_after_scan = False
         self._theme_originals = {}
         self._active_theme = 'Light'
         self._setup_style()
@@ -107,6 +112,7 @@ class MainWindow(tk.Tk):
                 foreground=[('active',c(INK))])
         sty.configure('DPC.Horizontal.TProgressbar',troughcolor=c('#E5ECEF'),background=c(TEAL),
                       bordercolor=c(WHITE),lightcolor=c(TEAL),darkcolor=c(TEAL))
+        # Widgets without a named style inherit these defaults.
         sty.configure('TEntry',padding=6,fieldbackground=c(WHITE),foreground=c(INK),insertcolor=c(INK))
         sty.configure('TCombobox',padding=6,fieldbackground=c(WHITE),background=c('#E9F0F5'),
                       foreground=c(INK),arrowcolor=c(INK))
@@ -130,7 +136,7 @@ class MainWindow(tk.Tk):
         return recolor(value,mode)
 
     def _apply_theme(self) -> None:
-        """Recolor existing Tk widgets using their original light color baseline."""
+        """Recolor every existing classic Tk widget using its v3 light baseline."""
         mode=resolve_mode(self.theme_var.get())
         self._active_theme=mode
         self._theme_style(mode)
@@ -158,6 +164,7 @@ class MainWindow(tk.Tk):
                 try:
                     widget.configure(**updates)
                 except tk.TclError:
+                    # ttk widgets are styled separately above.
                     pass
         self.detail.tag_configure('backup',foreground=recolor(BAD,mode))
         self.detail.tag_configure('rename',foreground=recolor('#A26A16',mode))
@@ -172,7 +179,7 @@ class MainWindow(tk.Tk):
         self.after(15000,self._refresh_system_theme)
 
     def _on_theme_change(self,event=None):
-        # Theme switches do not clear or modify scan or file operations.
+        # Theme switches do not clear or modify any scan or file operations.
         try:
             save_theme(self.theme_var.get())
         except OSError:
@@ -180,11 +187,12 @@ class MainWindow(tk.Tk):
         self._apply_theme()
 
     def _setup_vars(self):
-        self.folder_var = tk.StringVar()
-        self.main_var = tk.StringVar(value='.mp3')
-        self.sidecar_var = tk.StringVar(value='.lrc')
-        self.preset_var = tk.StringVar(value=PRESETS[0][0])
-        self.recursive_var = tk.BooleanVar(value=False)
+        prefs = load_preferences()
+        self.folder_var = tk.StringVar(value=prefs['folder'])
+        self.main_var = tk.StringVar(value=prefs['main'])
+        self.sidecar_var = tk.StringVar(value=prefs['sidecar'])
+        self.preset_var = tk.StringVar(value=prefs['preset'])
+        self.recursive_var = tk.BooleanVar(value=prefs['recursive'])
         self.query_var = tk.StringVar()
         self.filter_var = tk.StringVar(value='All')
         self.status_var = tk.StringVar(value='Choose a folder to begin.')
@@ -246,6 +254,9 @@ class MainWindow(tk.Tk):
                                          values=[r[0] for r in PRESETS],width=23,style='DPC.TCombobox')
         self.preset_combo.grid(row=1,column=0,sticky='ew',padx=(0,15),pady=(4,0),ipady=4)
         self.preset_combo.bind('<<ComboboxSelected>>', self._preset_changed)
+        self._preset_changing = False
+        self.main_var.trace_add('write', self._preset_from_extensions)
+        self.sidecar_var.trace_add('write', self._preset_from_extensions)
         self._txt(settings, 'Main extension', 9, True).grid(row=0,column=1,sticky='w')
         self.main_entry = ttk.Entry(settings,textvariable=self.main_var,width=14,style='DPC.TEntry')
         self.main_entry.grid(row=1,column=1,sticky='ew',padx=(0,15),pady=(4,0),ipady=6)
@@ -281,10 +292,13 @@ class MainWindow(tk.Tk):
         selectionbar=self._frame(results)
         selectionbar.pack(fill='x',padx=20,pady=(0,6))
         self.filter_combo=ttk.Combobox(selectionbar,textvariable=self.filter_var,state='readonly',width=20,
-                                       values=['All','With companion','Without companion'],style='DPC.TCombobox')
+                                       values=['All','With companion','Without companion','Included','Excluded'],style='DPC.TCombobox')
         self.filter_combo.pack(side='left')
         self.filter_combo.bind('<<ComboboxSelected>>',lambda *_: self._populate_groups())
-        self._txt(selectionbar,'Select a group to inspect every proposed file action.',9,color=MUTED).pack(side='left',padx=15)
+        self.toggle_btn=self._btn(selectionbar,'Exclude selected',self._toggle_group)
+        self.toggle_btn.pack(side='left',padx=(12,5))
+        self.all_btn=self._btn(selectionbar,'Exclude all',self._toggle_all)
+        self.all_btn.pack(side='left',padx=5)
 
         panes=tk.PanedWindow(results, orient='vertical', sashwidth=7, sashrelief='flat', bg='#E8EDF2')
         panes.pack(fill='both',expand=True,padx=20,pady=(0,11))
@@ -307,6 +321,7 @@ class MainWindow(tk.Tk):
         sc.pack(side='right',fill='y')
         self.tree.pack(fill='both',expand=True)
         self.tree.bind('<<TreeviewSelect>>',self._choose_group)
+        self.tree.bind('<space>',lambda event: self._toggle_group())
         self._txt(lower,'FILE-BY-FILE DECISIONS   /   FINAL RESULT',9,True,MUTED,bg='#F7FAFB').pack(anchor='w',padx=11,pady=(10,7))
         detailwrap=self._frame(lower,bg='#F7FAFB')
         detailwrap.pack(fill='both',expand=True)
@@ -327,6 +342,8 @@ class MainWindow(tk.Tk):
         bar.pack(fill='x',padx=26,pady=(9,4))
         self.scan_btn=self._btn(bar,'Scan & preview',self._start_scan,primary=True)
         self.scan_btn.pack(side='left')
+        self.cancel_btn=self._btn(bar,'Cancel scan',self._cancel_scan)
+        self.cancel_btn.pack(side='left',padx=9)
         self.export_btn=self._btn(bar,'Export report',self._export)
         self.export_btn.pack(side='left',padx=9)
         self.open_btn=self._btn(bar,'Open folder',self._open_folder)
@@ -345,11 +362,37 @@ class MainWindow(tk.Tk):
 
     def _preset_changed(self,event=None):
         label=self.preset_var.get()
-        for name,ext_main,ext_side in PRESETS:
-            if name == label and ext_main:
-                self.main_var.set(ext_main)
-                self.sidecar_var.set(ext_side)
-                return
+        self._preset_changing=True
+        try:
+            for name,ext_main,ext_side in PRESETS:
+                if name == label and ext_main:
+                    self.main_var.set(ext_main)
+                    self.sidecar_var.set(ext_side)
+                    break
+        finally:
+            self._preset_changing=False
+
+    def _preset_from_extensions(self,*_):
+        if getattr(self,'_preset_changing',False): return
+        main=self.main_var.get().strip().casefold()
+        side=self.sidecar_var.get().strip().casefold()
+        if main and not main.startswith('.'): main='.'+main
+        if side and not side.startswith('.'): side='.'+side
+        choice=next((name for name,a,b in PRESETS if a and (a,b)==(main,side)),
+                    'Custom extensions')
+        self.preset_var.set(choice)
+
+    def _remember_preferences(self):
+        try:
+            from file_pair_cleaner import PairType
+            PairType(self.main_var.get(),self.sidecar_var.get())
+            folder=self.folder_var.get().strip().strip('"')
+            if folder and Path(folder).is_dir():
+                save_preferences(folder,self.main_var.get(),self.sidecar_var.get(),
+                                 self.preset_var.get(),self.recursive_var.get())
+        except (ValueError,OSError):
+            # Bad/temporary selections never overwrite the last known-good choices.
+            pass
 
     def _browse(self):
         path=filedialog.askdirectory(parent=self,title='Choose a folder to scan',mustexist=True,
@@ -362,6 +405,7 @@ class MainWindow(tk.Tk):
             self._result=None
             self._selected_group=None
             self._row_groups={}
+            self._excluded_groups.clear()
             for item in self.tree.get_children(): self.tree.delete(item)
             self._set_detail('Settings changed. Scan again to review a fresh plan.')
             for val in self.stat_vars.values(): val.set('0')
@@ -374,6 +418,9 @@ class MainWindow(tk.Tk):
         self.apply_btn.configure(state='disabled')
         self.export_btn.configure(state='disabled')
         self.backup_btn.configure(state='disabled')
+        self.cancel_btn.configure(state='disabled')
+        self.toggle_btn.configure(state='disabled')
+        self.all_btn.configure(state='disabled')
         self.progress.pack_forget()
 
     def _set_detail(self,value):
@@ -391,6 +438,8 @@ class MainWindow(tk.Tk):
             widget.configure(state=state if widget != self.preset_combo else ('disabled' if is_busy else 'readonly'))
         self.apply_btn.configure(state='disabled' if is_busy else ('normal' if self._result and self._result.changes else 'disabled'))
         self.export_btn.configure(state='disabled' if is_busy or self._result is None else 'normal')
+        self.cancel_btn.configure(state='normal' if is_busy and not apply else 'disabled')
+        self._update_selection_buttons()
         if is_busy:
             self.progress.pack(side='left',padx=(0,11),before=self.status_label) if not self.progress.winfo_manager() else None
             self.progress.start(12)
@@ -414,14 +463,27 @@ class MainWindow(tk.Tk):
             messagebox.showerror('Check your selection',str(ex),parent=self)
             return
         self._result=None
+        self._selected_group=None
+        self._excluded_groups.clear()
+        for item in self.tree.get_children(): self.tree.delete(item)
+        self._row_groups={}
+        self._set_detail('Scanning. No files are being changed.')
         self._last_backup=None
         self.backup_btn.configure(state='disabled')
+        self._scan_cancel_event = threading.Event()
+        cancel_event = self._scan_cancel_event
+        try:
+            save_preferences(folder,m,s,self.preset_var.get(),recursive)
+        except OSError:
+            self.status_var.set('Settings could not be saved; scan is still safe.')
         self.status_var.set('Scanning filenames. Nothing will be modified…')
         self._busy_mode(True)
         def worker():
             try:
-                result=scan(folder,m,s,recursive)
-                self._events.put(('scan_ok',result))
+                result=scan(folder,m,s,recursive,cancel_event=cancel_event)
+                self._events.put(('scan_cancelled',None) if cancel_event.is_set() else ('scan_ok',result))
+            except ScanCancelled:
+                self._events.put(('scan_cancelled',None))
             except Exception as ex:
                 self._events.put(('error',('Scan failed',str(ex))))
         threading.Thread(target=worker,daemon=True).start()
@@ -430,7 +492,17 @@ class MainWindow(tk.Tk):
         try:
             while True:
                 kind,payload=self._events.get_nowait()
-                if kind=='scan_ok':
+                if self._close_after_scan and not self._applying:
+                    self.destroy()
+                    return
+                if kind=='scan_cancelled':
+                    self._scan_cancel_event=None
+                    self._busy_mode(False)
+                    self.status_var.set('Scan cancelled safely — no files were changed.')
+                    self._mark_idle()
+                    self.status_var.set('Scan cancelled safely — no files were changed.')
+                elif kind=='scan_ok':
+                    self._scan_cancel_event=None
                     self._result=payload
                     self._busy_mode(False)
                     for key,n in [('groups',len(payload.groups)),('backups',payload.backups),
@@ -448,11 +520,17 @@ class MainWindow(tk.Tk):
                     self.backup_btn.configure(state='normal' if payload else 'disabled')
                     self.status_var.set('Cleanup completed successfully. Backup retained.')
                     self._result=None
+                    self._excluded_groups.clear()
+                    self._selected_group=None
+                    for item in self.tree.get_children(): self.tree.delete(item)
+                    self._set_detail('Cleanup complete. Run a new scan to refresh the preview.')
+                    self._update_selection_buttons()
                     self.apply_btn.configure(state='disabled')
                     self.export_btn.configure(state='disabled')
                     messagebox.showinfo('Cleanup complete',
                         'All selected changes were applied.\n\nBackup folder:\n'+str(payload),parent=self)
                 elif kind=='error':
+                    self._scan_cancel_event=None
                     self._busy_mode(False)
                     self.status_var.set(payload[0]+': '+payload[1])
                     messagebox.showerror(payload[0],payload[1]+'\n\nReview the folder and any backups before retrying.',parent=self)
@@ -461,16 +539,33 @@ class MainWindow(tk.Tk):
         if self.winfo_exists(): self.after(90,self._drain_events)
 
     def _populate_groups(self):
+        previous = self._selected_group.main.path if self._selected_group else None
         for item in self.tree.get_children(): self.tree.delete(item)
         self._row_groups={}
         self._selected_group=None
         self._set_detail('Select any group in the list to see the exact file decisions.')
-        if self._result is None: return
-        for idx,group in enumerate(self._result.filter_groups(self.query_var.get(),self.filter_var.get()),1):
-            item=self.tree.insert('', 'end', text=(str(group.main.path.parent.relative_to(self._result.folder)) + ' / ' if group.main.path.parent != self._result.folder else '') + group.title,
+        if self._result is None:
+            self._update_selection_buttons()
+            return
+        groups=self._result.filter_groups(self.query_var.get(),
+             self.filter_var.get() if self.filter_var.get() not in ('Included','Excluded') else 'All')
+        if self.filter_var.get() == 'Included':
+            groups=[g for g in groups if g.main.path not in self._excluded_groups]
+        elif self.filter_var.get() == 'Excluded':
+            groups=[g for g in groups if g.main.path in self._excluded_groups]
+        to_select=None
+        for idx,group in enumerate(groups,1):
+            item=self.tree.insert('', 'end', text=(str(group.main.path.parent.relative_to(self._result.folder)) + ' / ' if group.main.path.parent != self._result.folder else '') + ('[ ] ' if group.main.path in self._excluded_groups else '[x] ') + group.title,
                     values=('YES' if group.sidecar else 'NO',len(group.changes),group.reason))
             self._row_groups[item]=group
-        if self._row_groups:
+            if group.main.path == previous: to_select=item
+        if to_select:
+            self.tree.selection_set(to_select)
+            self.tree.see(to_select)
+            self._choose_group()
+        self._refresh_selected_counts()
+        self._update_selection_buttons()
+        if self._row_groups and not to_select:
             first=next(iter(self._row_groups))
             self.tree.selection_set(first)
             self.tree.focus(first)
@@ -484,8 +579,12 @@ class MainWindow(tk.Tk):
         group=self._row_groups.get(selected[0])
         if group is None: return
         self._selected_group=group
+        self._update_selection_buttons()
         change_for={ch.source:ch for ch in group.changes}
-        lines=[f'{group.title}',group.reason,'', 'CURRENT FILES / DECISIONS']
+        lines=[f'{group.title}',
+               'INCLUDED in cleanup' if group.main.path not in self._excluded_groups else
+               'EXCLUDED — nothing in this group will change',
+               group.reason,'', 'CURRENT FILES / DECISIONS']
         for item in group.items:
             change=change_for.get(item.path)
             if change is None: lines.append('[KEEP]    '+item.path.name)
@@ -505,33 +604,75 @@ class MainWindow(tk.Tk):
             self.detail.insert('end',line+'\n',tag)
         self.detail.configure(state='disabled')
 
+    def _refresh_selected_counts(self):
+        if self._result is None: return
+        selected, changes=self._result.selected_plan(self._excluded_groups)
+        for key,num in (('groups',len(selected)),
+                        ('backups',sum(x.action=='backup' for x in changes)),
+                        ('renames',sum(x.action=='rename' for x in changes))):
+            self.stat_vars[key].set(str(num))
+        self.apply_btn.configure(state='normal' if changes and not self._busy else 'disabled')
+        self.all_btn.configure(text='Include all' if self._excluded_groups else 'Exclude all')
+
+    def _update_selection_buttons(self):
+        can_change=self._result is not None and not self._busy
+        self.toggle_btn.configure(state='normal' if can_change and self._selected_group else 'disabled')
+        self.all_btn.configure(state='normal' if can_change else 'disabled')
+        if self._selected_group:
+            self.toggle_btn.configure(text='Include selected' if
+                 self._selected_group.main.path in self._excluded_groups else 'Exclude selected')
+
+    def _toggle_group(self):
+        if self._busy or not self._selected_group: return
+        key=self._selected_group.main.path
+        if key in self._excluded_groups: self._excluded_groups.remove(key)
+        else: self._excluded_groups.add(key)
+        self._populate_groups()
+
+    def _toggle_all(self):
+        if self._busy or not self._result: return
+        if self._excluded_groups: self._excluded_groups.clear()
+        else: self._excluded_groups={g.main.path for g in self._result.groups}
+        self._populate_groups()
+
+    def _cancel_scan(self):
+        if self._busy and not self._applying and self._scan_cancel_event:
+            self._scan_cancel_event.set()
+            self.cancel_btn.configure(state='disabled')
+            self.status_var.set('Cancelling scan safely… No files will be changed.')
+
     def _export(self):
         if not self._result: return
         path=filedialog.asksaveasfilename(parent=self,title='Save complete preview',defaultextension='.txt',
                                           filetypes=[('Text report','*.txt')],initialfile='Duplicate_Pair_Cleaner_Preview.txt')
         if not path: return
         try:
-            Path(path).write_text(self._result.report(),encoding='utf-8-sig')
+            Path(path).write_text(self._result.selection_report(self._excluded_groups),encoding='utf-8-sig')
         except OSError as ex:
             messagebox.showerror('Cannot save report',str(ex),parent=self)
             return
         self.status_var.set('Complete preview exported to '+path)
 
     def _confirm_apply(self):
-        if self._busy or not self._result or not self._result.changes: return
+        if self._busy or not self._result: return
         r=self._result
-        msg=(f'You are about to clean {len(r.groups)} groups.\n\n'
-             f'Files moved to a dated backup: {r.backups}\n'
-             f'Files renamed: {r.renames}\n\n'
+        selected, changes=r.selected_plan(self._excluded_groups)
+        if not changes: return
+        backups=sum(c.action=='backup' for c in changes)
+        renames=sum(c.action=='rename' for c in changes)
+        msg=(f'You are about to clean {len(selected)} included groups ({len(self._excluded_groups)} excluded).\n\n'
+             f'Files moved to a dated backup: {backups}\n'
+             f'Files renamed: {renames}\n\n'
              f'Selected folder:\n{r.folder}\n\n'
              'Backups are retained. This action does NOT permanently delete files.\n'
              'Have you reviewed the proposed changes?')
         if not messagebox.askyesno('Confirm cleanup — review carefully',msg,icon='warning',parent=self): return
+        frozen_excluded=frozenset(self._excluded_groups)
         self._busy_mode(True,apply=True)
         self.status_var.set('Applying changes with backup and rollback protection. Please wait…')
         # UI stays responsive; closing is prevented until the transaction finishes.
         def worker():
-            try: self._events.put(('apply_ok',r.apply()))
+            try: self._events.put(('apply_ok',r.apply(frozen_excluded)))
             except BaseException as ex: self._events.put(('error',('Cleanup was not completed',str(ex))))
         threading.Thread(target=worker,daemon=True).start()
 
@@ -551,9 +692,13 @@ class MainWindow(tk.Tk):
             messagebox.showwarning('Cleanup in progress',
                 'Please wait for the current file operation to finish before closing.',parent=self)
             return
-        if self._busy and not messagebox.askyesno('Scanning in progress',
-                 'A background scan is running. No files have been changed. Close anyway?',parent=self):
+        if self._busy:
+            if messagebox.askyesno('Scanning in progress',
+                   'Cancel the scan and close when the worker stops? No files will be changed.',parent=self):
+                self._close_after_scan=True
+                self._cancel_scan()
             return
+        self._remember_preferences()
         self.destroy()
 
 

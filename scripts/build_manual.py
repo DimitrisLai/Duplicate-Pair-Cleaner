@@ -15,7 +15,7 @@ from reportlab.platypus import Paragraph
 ROOT=Path(__file__).resolve().parent.parent
 OUT=ROOT/'dist'
 OUT.mkdir(exist_ok=True)
-PDF=OUT/'Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf'
+PDF=OUT/'Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf'
 W,H=A4
 NAVY=HexColor('#0B172B');DARK=HexColor('#142A43');TEAL=HexColor('#07988B')
 INK=HexColor('#1A2B3F');MUTED=HexColor('#66788B');PALE=HexColor('#F2F6F8')
@@ -31,7 +31,7 @@ else:
     REG='Helvetica';BOLD='Helvetica-Bold';MONO='Courier'
 
 c=canvas.Canvas(PDF.as_posix(),pagesize=A4,pageCompression=1)
-c.setTitle('Duplicate Pair Cleaner v3.1.0 — Windows GUI User Manual')
+c.setTitle('Duplicate Pair Cleaner v3.5.0 — Windows GUI User Manual')
 c.setAuthor('DimitrisLai')
 c.setSubject('Complete illustrated manual for the final Duplicate Pair Cleaner Windows GUI')
 LEFT=46;RIGHT=W-46;WIDTH=RIGHT-LEFT
@@ -53,7 +53,7 @@ def rule(y):
 def header(num,title,kicker):
     c.setFillColor(NAVY);c.rect(0,H-67,W,67,fill=1,stroke=0)
     label(LEFT,H-26,'DUPLICATE PAIR CLEANER',10,white,True)
-    label(RIGHT-119,H-26,'WINDOWS GUI   ·   v3.1.0',7.6,CYAN)
+    label(RIGHT-119,H-26,'WINDOWS GUI   ·   v3.5.0',7.6,CYAN)
     label(LEFT,H-109,kicker.upper(),8,TEAL,True)
     label(LEFT,H-145,title,21,NAVY,True)
     c.setStrokeColor(TEAL);c.setLineWidth(2.1);c.line(LEFT,H-158,LEFT+61,H-158)
@@ -93,7 +93,7 @@ label(LEFT,H-407,'Review changes before they happen.',11,HexColor('#B9CCD7'))
 rule_color=HexColor('#4B8089');c.setStrokeColor(rule_color);c.setLineWidth(2);c.line(LEFT,H-457,LEFT+110,H-457)
 label(LEFT,H-493,'REAL WINDOWS DESKTOP APP',9,CYAN,True)
 label(LEFT,H-513,'Folder browser  /  Grouped previews  /  Safe backups',9,HexColor('#C8DBE4'))
-label(LEFT,91,'VERSION 3.1.0    ·    OCTOBER 2026    ·    MIT LICENSE',9,CYAN,True)
+label(LEFT,91,'VERSION 3.5.0    ·    OCTOBER 2026    ·    MIT LICENSE',9,CYAN,True)
 label(LEFT,66,'Created by DimitrisLai',9,HexColor('#D2E4EA'))
 new_page()
 
@@ -111,7 +111,7 @@ if image.is_file():
     y-=height+24
 else:
     y=info_box(y,'GUI screenshot', 'The live application preview is embedded in the source release.',height=70)-25
-y=para('<b>Visual walkthrough:</b> the upper section selects the folder and extensions. The summary tiles show groups, backups, renames and warnings. The top-right Appearance selector offers Dark, Light, or System. The lower section reveals every decision. The bottom action bar handles Preview, Export and Apply.',LEFT,y,size=8.9,leading=15)
+y=para('<b>Visual walkthrough:</b> the upper section selects the folder and extensions. The Light-theme screenshot shows file groups, backups, renames and warnings. Use the Appearance dropdown for Dark or System mode. The lower section shows group decisions; Include/Exclude controls protect selected groups. The bottom bar supports Preview, Cancel scan, Export and Apply.',LEFT,y,size=8.9,leading=15)
 new_page()
 
 # Page 3
@@ -119,12 +119,12 @@ header(3,'Install and launch','quick start')
 y=H-184
 y=info_box(y,'NO PYTHON INSTALLATION REQUIRED','The Windows portable ZIP contains a compiled executable and its support files. Extract everything first, then start the EXE.',height=86)-25
 for idx,(title,body) in enumerate([
-('Download the portable ZIP','Open the latest GitHub v3.1.0 Release and download the Windows-Portable ZIP.'),
+('Download the portable ZIP','Open GitHub v3.5.0 Releases and download the Windows-Portable ZIP.'),
 ('Extract all files','Right-click the ZIP and choose Extract All. Keep the DuplicatePairCleaner folder intact.'),
 ('Launch the application','Double-click DuplicatePairCleaner.exe inside the extracted DuplicatePairCleaner folder.'),
-('Choose your folder','Click Browse folder; or paste a full path in the box.'),
-('Select file types','Use a preset or custom file types. Subfolders are optional. Choose Light, Dark, or System in the header.'),
-('Preview, then confirm','Click Scan & preview. Apply cleanup is available only after review.')],1):
+('Choose your folder','Click Browse or paste a path. Your last valid folder and extensions are remembered.'),
+('Select file types','Use a preset or custom file types. Subfolders are optional. Choose Light, Dark or System in the header.'),
+('Preview, then confirm','Click Scan & preview, exclude groups if needed, then confirm cleanup.')],1):
     c.setFillColor(TEAL);c.circle(LEFT+11,y-9,11,stroke=0,fill=1)
     label(LEFT+7.5,y-12,str(idx),9,white,True)
     label(LEFT+32,y-3,title,11,NAVY,True)
@@ -151,7 +151,7 @@ new_page()
 # Page 5
 header(5,'Preview every change','understand the results')
 y=H-188
-y=para('The preview displays changes <b>grouped by base filename</b>. Click any row to inspect decisions. Search for a track, filter by companion availability or export the full plan without modifying files.',LEFT,y,size=9.6,leading=17)-15
+y=para('The preview displays changes <b>grouped by base filename</b>. Click a row to see its decisions; exclude a whole group if needed. Search/filter by companion or inclusion, or export the preview without changing files. Cancel scan stops an ongoing preview safely.',LEFT,y,size=9.6,leading=17)-15
 y=codepanel(y,'Song - Demo Artist\n[BACKUP]  Song - Demo Artist.mp3\n[RENAME]  Song - Demo Artist(1).mp3\n       -> Song - Demo Artist.mp3\n[RENAME]  Song - Demo Artist(1).lrc',height=132)
 for i,(tag,meaning) in enumerate([('KEEP','Existing file is retained unchanged.'),('BACKUP','Extra file will be moved to a dated backup.'),('RENAME','Selected file will receive a cleaned-up name.')]):
     top=y-i*57
@@ -176,11 +176,11 @@ new_page()
 # Page 7
 header(7,'Apply safely and recover','backup workflow')
 y=H-189
-y=para('After preview, <b>Apply cleanup</b> opens a confirmation window showing the selected folder and exact proposed backup/rename totals. Clicking No changes nothing. Clicking Yes starts the operation.',LEFT,y,size=10,leading=17)-24
+y=para('After preview, <b>Apply cleanup</b> opens a confirmation showing only included groups and backup/rename totals. Clicking No changes nothing. Clicking Yes starts the operation.',LEFT,y,size=10,leading=17)-24
 y=codepanel(y,'C:/Music/\n  Song.mp3\n  Song.lrc\n  _File_Pair_Cleaner_Backup_20261021_123000_123456/\n    manifest.json\n    duplicates/\n      Song.mp3',height=153)
 y=section(y,'What is inside the backup?','Extra files are moved under duplicates/. The JSON manifest records their original paths and all rename operations. Use Open last backup from the GUI after the cleanup.')
 y=section(y,'How to restore','Close other programs, read manifest.json, check for occupied final names and copy the selected original files back. There is no automatic restore button.')
-y=info_box(y,'INTERRUPTION SAFETY','The application rechecks file changes and refuses occupied destinations. Best-effort rollback is attempted after failures; abrupt power loss can still require manual recovery.',height=87)
+y=info_box(y,'INTERRUPTION SAFETY','The application rechecks selected files and refuses occupied destinations. Excluded groups are untouched. Best-effort rollback is attempted after failures; abrupt power loss can still require manual recovery.',height=87)
 new_page()
 
 # Page 8
@@ -200,7 +200,7 @@ new_page()
 # Page 9
 header(9,'Project and release information','open source')
 y=H-188
-y=para('<b>Duplicate Pair Cleaner 3.1.0</b> is open-source software by DimitrisLai. The core matching algorithm is preserved from stable version 2.2.0; version 3 adds the desktop interface.',LEFT,y,size=10,leading=17)-30
+y=para('<b>Duplicate Pair Cleaner 3.5.0</b> is open-source software by DimitrisLai. The core matching algorithm is preserved; v3.5 adds remembered settings, safe scan cancellation, selective groups and Light/Dark/System appearance.',LEFT,y,size=10,leading=17)-30
 for title,desc in [
 ('Source and license','MIT License. All Python source, tests, build scripts, workflows and release notes are published on GitHub.'),
 ('Technical requirements','For the Windows portable EXE, Python is included in the bundle. Source version requires Python 3.10+ with Tkinter.'),
@@ -211,6 +211,6 @@ y-=5
 panel(LEFT,y-106,WIDTH,106,PALE)
 label(LEFT+17,y-26,'OFFICIAL PROJECT',11,TEAL,True)
 label(LEFT+17,y-49,'github.com/DimitrisLai/Duplicate-Pair-Cleaner',9.2,INK)
-label(LEFT+17,y-76,'FINAL WINDOWS GUI RELEASE  ·  3.1.0  ·  MIT',9,INK,True)
+label(LEFT+17,y-76,'FEATURE-COMPLETE 2026  ·  3.5.0  ·  MIT',9,INK,True)
 c.save()
 print(f'Manual: {PDF} | {PDF.stat().st_size} bytes')

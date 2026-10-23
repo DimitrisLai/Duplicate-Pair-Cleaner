@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
+from typing import Callable
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -17,7 +18,7 @@ import shutil
 import sys
 import uuid
 
-VERSION = "3.1.0"
+VERSION = "3.5.0"
 BACKUP_PREFIX = "_File_Pair_Cleaner_Backup_"
 OLD_BACKUP_PREFIX = "_MP3_LRC_Backup_"
 # Numbered-copy suffixes at the END of a stem only. (Live), (2026), etc. are untouched.
@@ -97,12 +98,23 @@ def is_backup_dir(name: str) -> bool:
     return folded.startswith(BACKUP_PREFIX.casefold()) or folded.startswith(OLD_BACKUP_PREFIX.casefold())
 
 
-def iter_selected(folder: Path, recursive: bool, types: PairType):
+class ScanCancelled(Exception):
+    """A user-requested scan cancellation; preview-only, no mutations."""
+
+
+def check_scan_cancel(should_cancel: Callable[[], bool] | None) -> None:
+    if should_cancel is not None and should_cancel():
+        raise ScanCancelled('Scan cancelled. No files were changed.')
+
+
+def iter_selected(folder: Path, recursive: bool, types: PairType,
+                  should_cancel: Callable[[], bool] | None = None):
     wanted = {types.main, types.sidecar}
     if recursive:
         def on_error(exc):
             raise exc
         for dirname, subdirs, names in os.walk(folder, onerror=on_error, followlinks=False):
+            check_scan_cancel(should_cancel)
             # Never enter backups (including backups produced by the previous releases).
             subdirs[:] = [name for name in subdirs
                           if name not in {".git", ".venv", "__pycache__"}
@@ -110,18 +122,22 @@ def iter_selected(folder: Path, recursive: bool, types: PairType):
                           and not (Path(dirname) / name).is_symlink()
                           and not (hasattr(os.path, "isjunction") and os.path.isjunction(str(Path(dirname) / name)))]
             for name in names:
+                check_scan_cancel(should_cancel)
                 path = Path(dirname) / name
                 if path.suffix.casefold() in wanted and path.is_file() and not path.is_symlink():
                     yield path
     else:
         for path in folder.iterdir():
+            check_scan_cancel(should_cancel)
             if path.suffix.casefold() in wanted and path.is_file() and not path.is_symlink():
                 yield path
 
 
-def build_plan(folder: Path, recursive: bool, types: PairType = PairType()):
+def build_plan(folder: Path, recursive: bool, types: PairType = PairType(),
+               should_cancel: Callable[[], bool] | None = None):
     families: dict[tuple[Path, str], list[Item]] = defaultdict(list)
-    for path in iter_selected(folder, recursive, types):
+    for path in iter_selected(folder, recursive, types, should_cancel):
+        check_scan_cancel(should_cancel)
         stem, number = stem_parts(path.stem)
         stat = path.stat()
         families[(path.parent, stem.casefold())].append(
@@ -132,7 +148,9 @@ def build_plan(folder: Path, recursive: bool, types: PairType = PairType()):
     warnings: list[str] = []
     destinations = set()
     occupied_by_directory: dict[Path, set[str]] = {}
+    check_scan_cancel(should_cancel)
     for (directory, family), items in sorted(families.items(), key=lambda p: (str(p[0][0]).casefold(), p[0][1])):
+        check_scan_cancel(should_cancel)
         mains = [i for i in items if i.ext == types.main]
         companions = [i for i in items if i.ext == types.sidecar]
         if not mains or not any(i.number for i in items):
@@ -201,6 +219,7 @@ def build_plan(folder: Path, recursive: bool, types: PairType = PairType()):
                 types=types,
             ))
             changes.extend(proposed)
+    check_scan_cancel(should_cancel)
     return groups, changes, warnings
 
 

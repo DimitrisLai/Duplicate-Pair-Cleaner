@@ -19,7 +19,7 @@ class GuiLogicTests(unittest.TestCase):
             path.write_bytes(name.encode('utf-8'))
 
     def test_gui_version(self):
-        self.assertEqual(APP_VERSION, '3.1.0')
+        self.assertEqual(APP_VERSION, '3.5.0')
 
     def test_read_only_preview_and_report(self):
         self.put('Song.mp3','Song(1).mp3','Song(1).lrc')

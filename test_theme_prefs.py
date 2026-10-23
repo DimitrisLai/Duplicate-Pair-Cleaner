@@ -1,4 +1,4 @@
-"""Tests for Light / Dark / System appearance settings."""
+"""Regression tests for the Light / Dark / System preference."""
 import json
 import tempfile
 from pathlib import Path

@@ -220,8 +220,6 @@ class PairCleanerTests(unittest.TestCase):
     def test_no_overwrites_with_conflicting_name_case(self):
         # Only possible on a case-sensitive filesystem; planner must skip ambiguous families.
         self.put('A.mp3', 'A(1).mp3', 'a(1).mp3')
-        if sum(p.name.casefold() == 'a(1).mp3' for p in self.folder.iterdir()) != 2:
-            self.skipTest('Case-insensitive filesystem cannot hold differently-cased files')
         groups, changes, warnings = c.build_plan(self.folder, False)
         self.assertEqual([], changes)
         self.assertTrue(warnings)
@@ -230,7 +228,7 @@ class PairCleanerTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()) as output, self.assertRaises(SystemExit) as result:
             c.main(['--version'])
         self.assertEqual(0, result.exception.code)
-        self.assertIn('3.1.0', output.getvalue())
+        self.assertIn('3.5.0', output.getvalue())
 
     def test_skip_git_and_virtualenv_directories(self):
         self.put('.git/Song.mp3', '.git/Song(1).mp3',

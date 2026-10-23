@@ -12,40 +12,43 @@ import sys
 
 MODES = ('System', 'Light', 'Dark')
 
+# The original v3.0.0 palette is retained for the Light theme.
+# Dark uses deliberately near-black backgrounds, readable text, and teal accents.
 DARK_COLORS = {
-    '#0b172b': '#080E1B',
+    '#0b172b': '#080E1B',  # header
     '#142a43': '#162638',
-    '#07988b': '#30D5C2',
-    '#f4f7fa': '#0B0F17',
+    '#07988b': '#30D5C2',  # teal controls/sections
+    '#f4f7fa': '#0B0F17',  # application background
     '#dae3ea': '#303C4D',
-    '#17283c': '#EAF0F8',
-    '#657589': '#AABACC',
-    '#ffffff': '#192332',
+    '#17283c': '#EAF0F8',  # main text
+    '#657589': '#AABACC',  # secondary text
+    '#ffffff': '#192332',  # panels
     '#a73142': '#FF98A0',
     '#93641c': '#F2BE65',
-    '#e9f0f5': '#26374A',
+    '#e9f0f5': '#26374A',  # secondary buttons
     '#dce9f2': '#344B61',
     '#086c68': '#178E82',
-    '#fceff0': '#4E303A',
-    '#def3ef': '#174D45',
-    '#edf3f7': '#25364B',
-    '#e5ecef': '#243448',
-    '#e8edf2': '#2C4054',
-    '#f7fafb': '#111B29',
-    '#a26a16': '#F6BD64',
-    '#067e6d': '#61E6C7',
-    '#31c6b8': '#43E1D2',
+    '#fceff0': '#4E303A',  # danger button
+    '#def3ef': '#174D45',  # selected row
+    '#edf3f7': '#25364B',  # tree heading
+    '#e5ecef': '#243448',  # progress trough
+    '#e8edf2': '#2C4054',  # sash
+    '#f7fafb': '#111B29',  # detail panel
+    '#a26a16': '#F6BD64',  # rename
+    '#067e6d': '#61E6C7',  # keep
+    '#31c6b8': '#43E1D2',  # header logo
     '#b4c8d8': '#B4CADB',
     '#8ddace': '#A1ECDA',
 }
 
 
 def normalize_mode(mode: str | None) -> str:
+    """Normalize stored or user-selected modes; never execute arbitrary settings."""
     return mode if mode in MODES else 'System'
 
 
 def detect_system_dark(platform: str | None = None) -> bool:
-    """Respect Windows' per-user app setting; fall back safely elsewhere."""
+    """Respect Windows' per-user app setting. Safe fallbacks on other systems."""
     platform = platform or sys.platform
     if platform == 'win32':
         try:
@@ -93,12 +96,19 @@ def load_theme(path: Path | None = None) -> str:
 
 
 def save_theme(theme: str, path: Path | None = None) -> None:
-    """Save only appearance preference, using atomic replacement."""
+    """Save only appearance preference; an atomic replacement avoids a half-written file."""
     theme = normalize_mode(theme)
     p = path or config_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_name(p.name + '.tmp')
-    tmp.write_text(json.dumps({'theme': theme}, indent=2) + '\n', encoding='utf-8')
+    try:
+        existing = json.loads(p.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        existing = {}
+    if not isinstance(existing, dict):
+        existing = {}
+    existing['theme'] = theme
+    tmp.write_text(json.dumps(existing, indent=2) + '\n', encoding='utf-8')
     os.replace(tmp, p)
 
 

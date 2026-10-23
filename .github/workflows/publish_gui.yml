@@ -1,8 +1,14 @@
-name: Windows GUI v3.1.0 — build and release
+name: Windows GUI v3.5.0 — final 2026 build and release
 on:
   push:
     branches: [main]
     paths:
+      - 'gui_app.py'
+      - 'gui_logic.py'
+      - 'gui_prefs.py'
+      - 'theme_prefs.py'
+      - 'file_pair_cleaner.py'
+      - 'test_v350.py'
       - '.github/workflows/publish_gui.yml'
   workflow_dispatch:
 permissions:
@@ -22,7 +28,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Test core and GUI model
-        run: python -m unittest -q test_cleaner.py test_gui_logic.py test_theme_prefs.py
+        run: python -m unittest -q test_cleaner.py test_gui_logic.py test_theme_prefs.py test_v350.py
       - name: Import GUI
         run: python -c "import gui_app, theme_prefs; print('GUI and themes imported')"
   windows:
@@ -68,7 +74,7 @@ jobs:
           python - <<'PY'
           from pypdf import PdfReader
           from pathlib import Path
-          pdf=Path('dist/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf')
+          pdf=Path('dist/Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf')
           assert pdf.stat().st_size > 50000, 'PDF unexpectedly small'
           assert len(PdfReader(str(pdf)).pages)==9, 'Expected nine full manual pages'
           print('Nine-page manual validated')
@@ -76,7 +82,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: documentation
-          path: dist/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf
+          path: dist/Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf
           if-no-files-found: error
   release:
     name: Publish portable application and PDF
@@ -98,27 +104,25 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile,ZIP_DEFLATED
           root=Path('stage')
-          out=Path('Duplicate-Pair-Cleaner-v3.1.0-Windows-Portable.zip')
+          out=Path('Duplicate-Pair-Cleaner-v3.5.0-Windows-Portable.zip')
           with ZipFile(out,'w',ZIP_DEFLATED,compresslevel=7) as z:
               for p in (root/'DuplicatePairCleaner').rglob('*'):
                   if p.is_file(): z.write(p, p.relative_to(root).as_posix())
               for item in ('LICENSE','README.md','docs/GUI_USER_GUIDE.md'):
                   z.write(item,item)
-              z.write(root/'Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf',
-                      'Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf')
+              z.write(root/'Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf',
+                      'Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf')
           with ZipFile(out) as z:
               assert z.testzip() is None and 'DuplicatePairCleaner/DuplicatePairCleaner.exe' in z.namelist()
           print('Portable bundle ready:',out.stat().st_size)
           PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-portable-v3.1.0
-          path: Duplicate-Pair-Cleaner-v3.1.0-Windows-Portable.zip
-          if-no-files-found: error
-          overwrite: true
-          retention-days: 90
-      - name: Attempt GitHub Release publication
+      - name: Generate source ZIP and release SHA-256 checksums
+        run: |
+          git archive --format=zip --output Duplicate-Pair-Cleaner-v3.5.0-Source.zip HEAD
+          sha256sum Duplicate-Pair-Cleaner-v3.5.0-Windows-Portable.zip Duplicate-Pair-Cleaner-v3.5.0-Source.zip stage/Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf | sed 's#stage/##' > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Publish v3.5.0
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v3.1.0 Duplicate-Pair-Cleaner-v3.1.0-Windows-Portable.zip stage/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf --target "$GITHUB_SHA" --title 'Duplicate Pair Cleaner v3.1.0 - Appearance Update' --notes-file docs/RELEASE_NOTES_v3.1.0.md --latest
+          gh release create v3.5.0 Duplicate-Pair-Cleaner-v3.5.0-Windows-Portable.zip Duplicate-Pair-Cleaner-v3.5.0-Source.zip SHA256SUMS.txt stage/Duplicate-Pair-Cleaner-v3.5.0-User-Manual.pdf --target "$GITHUB_SHA" --title 'Duplicate Pair Cleaner v3.5.0 - Final Feature Release 2026' --notes-file docs/RELEASE_NOTES_v3.5.0.md --latest
