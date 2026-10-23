@@ -220,6 +220,10 @@ class PairCleanerTests(unittest.TestCase):
     def test_no_overwrites_with_conflicting_name_case(self):
         # Only possible on a case-sensitive filesystem; planner must skip ambiguous families.
         self.put('A.mp3', 'A(1).mp3', 'a(1).mp3')
+        # Windows default filesystem is case-insensitive: these two variants
+        # cannot coexist and so cannot form an ambiguous duplicate family.
+        if len(list(self.folder.glob('*(1).mp3'))) < 2:
+            self.skipTest('Case-conflicting duplicate names cannot coexist on this filesystem')
         groups, changes, warnings = c.build_plan(self.folder, False)
         self.assertEqual([], changes)
         self.assertTrue(warnings)

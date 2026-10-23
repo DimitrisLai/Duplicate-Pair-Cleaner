@@ -34,8 +34,10 @@ class FinalReleaseTests(unittest.TestCase):
         save_theme('Dark',cfg)
         save_preferences(str(self.root),'MP4','SRT','Video + subtitles',True,cfg)
         prefs=load_preferences(cfg)
-        self.assertEqual(prefs,{'folder':str(self.root),'main':'.mp4','sidecar':'.srt',
-                                'preset':'Video + subtitles','recursive':True})
+        self.assertTrue(Path(prefs['folder']).samefile(self.root))
+        self.assertEqual({key:val for key,val in prefs.items() if key!='folder'},
+                         {'main':'.mp4','sidecar':'.srt',
+                          'preset':'Video + subtitles','recursive':True})
         self.assertEqual(load_theme(cfg),'Dark')
         save_theme('Light',cfg)
         self.assertEqual(load_preferences(cfg),prefs)
