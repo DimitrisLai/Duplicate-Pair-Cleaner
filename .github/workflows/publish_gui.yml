@@ -1,4 +1,4 @@
-name: Windows GUI v3.0.0 — build and release
+name: Windows GUI v3.1.0 — build and release
 on:
   push:
     branches: [main]
@@ -22,9 +22,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Test core and GUI model
-        run: python -m unittest -q test_cleaner.py test_gui_logic.py
+        run: python -m unittest -q test_cleaner.py test_gui_logic.py test_theme_prefs.py
       - name: Import GUI
-        run: python -c "import gui_app; print('GUI imported')"
+        run: python -c "import gui_app, theme_prefs; print('GUI and themes imported')"
   windows:
     name: Package portable Windows EXE
     runs-on: windows-latest
@@ -68,7 +68,7 @@ jobs:
           python - <<'PY'
           from pypdf import PdfReader
           from pathlib import Path
-          pdf=Path('dist/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf')
+          pdf=Path('dist/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf')
           assert pdf.stat().st_size > 50000, 'PDF unexpectedly small'
           assert len(PdfReader(str(pdf)).pages)==9, 'Expected nine full manual pages'
           print('Nine-page manual validated')
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: documentation
-          path: dist/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf
+          path: dist/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf
           if-no-files-found: error
   release:
     name: Publish portable application and PDF
@@ -98,22 +98,22 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile,ZIP_DEFLATED
           root=Path('stage')
-          out=Path('Duplicate-Pair-Cleaner-v3.0.0-Windows-Portable.zip')
+          out=Path('Duplicate-Pair-Cleaner-v3.1.0-Windows-Portable.zip')
           with ZipFile(out,'w',ZIP_DEFLATED,compresslevel=7) as z:
               for p in (root/'DuplicatePairCleaner').rglob('*'):
                   if p.is_file(): z.write(p, p.relative_to(root).as_posix())
               for item in ('LICENSE','README.md','docs/GUI_USER_GUIDE.md'):
                   z.write(item,item)
-              z.write(root/'Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf',
-                      'Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf')
+              z.write(root/'Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf',
+                      'Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf')
           with ZipFile(out) as z:
               assert z.testzip() is None and 'DuplicatePairCleaner/DuplicatePairCleaner.exe' in z.namelist()
           print('Portable bundle ready:',out.stat().st_size)
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-portable-v3.0.0
-          path: Duplicate-Pair-Cleaner-v3.0.0-Windows-Portable.zip
+          name: windows-portable-v3.1.0
+          path: Duplicate-Pair-Cleaner-v3.1.0-Windows-Portable.zip
           if-no-files-found: error
           overwrite: true
           retention-days: 90
@@ -121,4 +121,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v3.0.0 Duplicate-Pair-Cleaner-v3.0.0-Windows-Portable.zip stage/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf --target "$GITHUB_SHA" --title 'Duplicate Pair Cleaner v3.0.0 - Final Windows GUI' --notes-file docs/RELEASE_NOTES_v3.0.0.md --latest || { echo "::warning::Release publishing is restricted; the verified Windows ZIP is available as an Actions artifact."; echo "Publishing permission must be enabled for a permanent Release." >> "$GITHUB_STEP_SUMMARY"; }
+          gh release create v3.1.0 Duplicate-Pair-Cleaner-v3.1.0-Windows-Portable.zip stage/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf --target "$GITHUB_SHA" --title 'Duplicate Pair Cleaner v3.1.0 - Appearance Update' --notes-file docs/RELEASE_NOTES_v3.1.0.md --latest

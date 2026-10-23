@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import file_pair_cleaner as core
 
-APP_VERSION = '3.0.0'
+APP_VERSION = '3.1.0'
 
 @dataclass(frozen=True)
 class ScanResult:

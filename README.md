@@ -10,7 +10,7 @@ Duplicate Pair Cleaner consolidates numbered duplicates like `Song(1).mp3` while
 
 ## Download
 
-**[Download Windows GUI v3.0.0](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.0.0)**. Download the Windows-Portable ZIP, **extract all files**, then run `DuplicatePairCleaner.exe` inside the extracted `DuplicatePairCleaner` folder. The compiled app does **not require a separate Python installation**. The build is unsigned and may trigger Windows SmartScreen.
+**[Download Windows GUI v3.1.0](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v3.1.0)**. Download the Windows-Portable ZIP, **extract all files**, then run `DuplicatePairCleaner.exe` inside the extracted `DuplicatePairCleaner` folder. The compiled app does **not require a separate Python installation**. The build is unsigned and may trigger Windows SmartScreen.
 
 The older [v2.2.0 command-line release](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/tag/v2.2.0) remains available.
 
@@ -25,6 +25,8 @@ Only download this utility from the project's official [GitHub Releases](https:/
 
 
 ## What you can do
+
+- Choose **Light**, **Dark**, or **System** appearance in the GUI. Your selection persists between launches; changing it never alters a cleanup plan.
 
 - Select any folder using the Windows folder browser; optionally include subfolders.
 - Choose preset pairs `.mp3 + .lrc`, `.mp4 + .srt`, `.flac + .lrc`, `.jpg + .xmp`, `.wav + .txt`, or enter your own extensions.
@@ -85,8 +87,8 @@ The GUI source, GUI state model, cleaning core, manual generator and Windows pac
 ## Documentation and help
 
 - [Graphical interface guide](docs/GUI_USER_GUIDE.md)
-- [Download the official nine-page PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v3.0.0/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf) · [Repository copy](docs/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf)
-- [Changelog](CHANGELOG.md) / [Release notes](docs/RELEASE_NOTES_v3.0.0.md)
+- [Download the v3.1 nine-page PDF manual](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/releases/download/v3.1.0/Duplicate-Pair-Cleaner-v3.1.0-User-Manual.pdf) · [Repository copy](docs/Duplicate-Pair-Cleaner-v3.0.0-User-Manual.pdf)
+- [Changelog](CHANGELOG.md) / [Release notes](docs/RELEASE_NOTES_v3.1.0.md)
 - [Report an issue](https://github.com/DimitrisLai/Duplicate-Pair-Cleaner/issues) with synthetic filenames only
 
 Licensed under [MIT](LICENSE), by **DimitrisLai**.

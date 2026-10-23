@@ -20,6 +20,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run core and GUI-model regression tests
-        run: python -m unittest -v test_cleaner.py test_gui_logic.py
+        run: python -m unittest -v test_cleaner.py test_gui_logic.py test_theme_prefs.py
       - name: Check GUI module import
         run: python -c "import gui_app,gui_logic; print(gui_logic.APP_VERSION)"

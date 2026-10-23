@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from gui_logic import APP_VERSION, ScanResult, scan
+from theme_prefs import MODES, load_theme, save_theme, resolve_mode, recolor
 
 NAVY = '#0B172B'
 NAVY2 = '#142A43'
@@ -52,12 +53,16 @@ class MainWindow(tk.Tk):
         self._selected_group = None
         self._last_backup: Path | None = None
         self._row_groups = {}
+        self._theme_originals = {}
+        self._active_theme = 'Light'
         self._setup_style()
         self._setup_vars()
         self._make_layout()
+        self._apply_theme()
         self._mark_idle()
         self.protocol('WM_DELETE_WINDOW', self._on_close)
         self.after(90, self._drain_events)
+        self.after(15000,self._refresh_system_theme)
 
     def _setup_style(self):
         sty = ttk.Style(self)
@@ -75,6 +80,105 @@ class MainWindow(tk.Tk):
         sty.configure('DPC.Horizontal.TProgressbar', troughcolor='#E5ECEF', background=TEAL,
                       bordercolor=WHITE, lightcolor=TEAL, darkcolor=TEAL)
 
+    def _theme_style(self,mode: str) -> None:
+        """Apply matching ttk styles to tree, headings, entries and dropdowns."""
+        sty = ttk.Style(self)
+        if 'clam' in sty.theme_names():
+            sty.theme_use('clam')
+        c=lambda value: recolor(value,mode)
+        sty.configure('DPC.Treeview', background=c(WHITE), fieldbackground=c(WHITE),
+                      foreground=c(INK), rowheight=34, font=(FONT,10),borderwidth=0)
+        sty.map('DPC.Treeview',background=[('selected',c('#DEF3EF'))],
+                foreground=[('selected',c(INK))])
+        sty.configure('DPC.Treeview.Heading',background=c('#EDF3F7'),foreground=c(INK),
+                      relief='flat',font=(FONT,9,'bold'),padding=(9,10))
+        sty.map('DPC.Treeview.Heading',background=[('active',c('#E9F0F5'))],
+                foreground=[('active',c(INK))])
+        sty.configure('DPC.TCombobox',padding=6,fieldbackground=c(WHITE),
+                      background=c('#E9F0F5'),foreground=c(INK),arrowcolor=c(INK),
+                      selectbackground=c('#DEF3EF'),selectforeground=c(INK))
+        sty.map('DPC.TCombobox',fieldbackground=[('readonly',c(WHITE)),('disabled',c('#E9F0F5'))],
+                foreground=[('readonly',c(INK)),('disabled',c(MUTED))],
+                selectbackground=[('readonly',c(WHITE))],selectforeground=[('readonly',c(INK))])
+        sty.configure('DPC.TEntry',padding=6,fieldbackground=c(WHITE),
+                      foreground=c(INK),insertcolor=c(INK))
+        sty.configure('DPC.TCheckbutton',background=c(WHITE),foreground=c(INK))
+        sty.map('DPC.TCheckbutton',background=[('active',c(WHITE))],
+                foreground=[('active',c(INK))])
+        sty.configure('DPC.Horizontal.TProgressbar',troughcolor=c('#E5ECEF'),background=c(TEAL),
+                      bordercolor=c(WHITE),lightcolor=c(TEAL),darkcolor=c(TEAL))
+        sty.configure('TEntry',padding=6,fieldbackground=c(WHITE),foreground=c(INK),insertcolor=c(INK))
+        sty.configure('TCombobox',padding=6,fieldbackground=c(WHITE),background=c('#E9F0F5'),
+                      foreground=c(INK),arrowcolor=c(INK))
+        sty.map('TCombobox',fieldbackground=[('readonly',c(WHITE)),('disabled',c('#E9F0F5'))],
+                foreground=[('readonly',c(INK)),('disabled',c(MUTED))])
+        try:
+            self.option_add('*TCombobox*Listbox.background',c(WHITE))
+            self.option_add('*TCombobox*Listbox.foreground',c(INK))
+            self.option_add('*TCombobox*Listbox.selectBackground',c('#DEF3EF'))
+            self.option_add('*TCombobox*Listbox.selectForeground',c(INK))
+        except tk.TclError:
+            pass
+
+    @staticmethod
+    def _theme_widget_color(option, value, baseline, mode):
+        if mode == 'Dark' and option in ('foreground','activeforeground','insertbackground','selectforeground'):
+            if value.lower() == NAVY.lower():
+                return '#EAF0F8'
+            if value.lower() == WHITE.lower() and baseline.get('background','').lower() == NAVY.lower():
+                return '#F4FAFE'
+        return recolor(value,mode)
+
+    def _apply_theme(self) -> None:
+        """Recolor existing Tk widgets using their original light color baseline."""
+        mode=resolve_mode(self.theme_var.get())
+        self._active_theme=mode
+        self._theme_style(mode)
+        options=('background','foreground','activebackground','activeforeground',
+                 'insertbackground','selectbackground','selectforeground','highlightbackground')
+        def walk(w):
+            yield w
+            for child in w.winfo_children():
+                yield from walk(child)
+        for widget in walk(self):
+            key=str(widget)
+            if key not in self._theme_originals:
+                baseline={}
+                for opt in options:
+                    try:
+                        val=widget.cget(opt)
+                    except (tk.TclError,KeyError):
+                        continue
+                    if isinstance(val,str) and val.startswith('#'):
+                        baseline[opt]=val
+                self._theme_originals[key]=baseline
+            updates={opt:self._theme_widget_color(opt,value,self._theme_originals[key],mode)
+                     for opt,value in self._theme_originals[key].items()}
+            if updates:
+                try:
+                    widget.configure(**updates)
+                except tk.TclError:
+                    pass
+        self.detail.tag_configure('backup',foreground=recolor(BAD,mode))
+        self.detail.tag_configure('rename',foreground=recolor('#A26A16',mode))
+        self.detail.tag_configure('keep',foreground=recolor('#067E6D',mode))
+        self.detail.tag_configure('heading',foreground=recolor(INK,mode))
+
+    def _refresh_system_theme(self):
+        if not self.winfo_exists():
+            return
+        if self.theme_var.get() == 'System' and resolve_mode('System') != self._active_theme:
+            self._apply_theme()
+        self.after(15000,self._refresh_system_theme)
+
+    def _on_theme_change(self,event=None):
+        # Theme switches do not clear or modify scan or file operations.
+        try:
+            save_theme(self.theme_var.get())
+        except OSError:
+            self.status_var.set('Appearance updated; preference could not be saved on this PC.')
+        self._apply_theme()
+
     def _setup_vars(self):
         self.folder_var = tk.StringVar()
         self.main_var = tk.StringVar(value='.mp3')
@@ -84,6 +188,7 @@ class MainWindow(tk.Tk):
         self.query_var = tk.StringVar()
         self.filter_var = tk.StringVar(value='All')
         self.status_var = tk.StringVar(value='Choose a folder to begin.')
+        self.theme_var = tk.StringVar(value=load_theme())
         self.stat_vars = {key: tk.StringVar(value='0') for key in ('groups','backups','renames','warnings')}
         self.query_var.trace_add('write', lambda *_: self._populate_groups())
         for variable in (self.folder_var, self.main_var, self.sidecar_var, self.recursive_var):
@@ -114,7 +219,13 @@ class MainWindow(tk.Tk):
         self._txt(titlebox, 'DUPLICATE PAIR CLEANER', 18, True, WHITE, NAVY).pack(anchor='w')
         self._txt(titlebox, 'Find the right copy. Keep its companion. Know exactly what changes.',
                   10, False, '#B4C8D8', NAVY).pack(anchor='w', pady=(5, 0))
-        self._txt(header, f'WINDOWS DESKTOP  /  v{APP_VERSION}', 9, True, '#8DDACE', NAVY).pack(side='right',padx=28)
+        self._txt(header, f'WINDOWS DESKTOP  /  v{APP_VERSION}', 9, True, '#8DDACE', NAVY).pack(side='right',padx=(12,25))
+        self.theme_combo = ttk.Combobox(header, textvariable=self.theme_var,
+                                         values=MODES, state='readonly', width=9,
+                                         style='DPC.TCombobox')
+        self.theme_combo.pack(side='right',padx=(5,4),pady=25)
+        self.theme_combo.bind('<<ComboboxSelected>>',self._on_theme_change)
+        self._txt(header,'Appearance:',9,True,'#B4C8D8',NAVY).pack(side='right')
 
         main = self._frame(self, bg=LIGHT)
         main.pack(fill='both', expand=True, padx=25, pady=13)
@@ -136,10 +247,10 @@ class MainWindow(tk.Tk):
         self.preset_combo.grid(row=1,column=0,sticky='ew',padx=(0,15),pady=(4,0),ipady=4)
         self.preset_combo.bind('<<ComboboxSelected>>', self._preset_changed)
         self._txt(settings, 'Main extension', 9, True).grid(row=0,column=1,sticky='w')
-        self.main_entry = ttk.Entry(settings,textvariable=self.main_var,width=14)
+        self.main_entry = ttk.Entry(settings,textvariable=self.main_var,width=14,style='DPC.TEntry')
         self.main_entry.grid(row=1,column=1,sticky='ew',padx=(0,15),pady=(4,0),ipady=6)
         self._txt(settings, 'Companion extension', 9, True).grid(row=0,column=2,sticky='w')
-        self.side_entry = ttk.Entry(settings,textvariable=self.sidecar_var,width=14)
+        self.side_entry = ttk.Entry(settings,textvariable=self.sidecar_var,width=14,style='DPC.TEntry')
         self.side_entry.grid(row=1,column=2,sticky='ew',padx=(0,15),pady=(4,0),ipady=6)
         self.recursive_chk = ttk.Checkbutton(settings,text='Include subfolders',variable=self.recursive_var,
                                             style='DPC.TCheckbutton')
@@ -164,13 +275,13 @@ class MainWindow(tk.Tk):
         controls = self._frame(results)
         controls.pack(fill='x',padx=20,pady=(9,6))
         self._txt(controls,'03  REVIEW PROPOSED CHANGES',10,True,TEAL).pack(side='left')
-        self.search_entry = ttk.Entry(controls,textvariable=self.query_var,width=28)
+        self.search_entry = ttk.Entry(controls,textvariable=self.query_var,width=28,style='DPC.TEntry')
         self.search_entry.pack(side='right',padx=(10,0),ipady=4)
         self._txt(controls,'Search files:',9,False,MUTED).pack(side='right')
         selectionbar=self._frame(results)
         selectionbar.pack(fill='x',padx=20,pady=(0,6))
         self.filter_combo=ttk.Combobox(selectionbar,textvariable=self.filter_var,state='readonly',width=20,
-                                       values=['All','With companion','Without companion'])
+                                       values=['All','With companion','Without companion'],style='DPC.TCombobox')
         self.filter_combo.pack(side='left')
         self.filter_combo.bind('<<ComboboxSelected>>',lambda *_: self._populate_groups())
         self._txt(selectionbar,'Select a group to inspect every proposed file action.',9,color=MUTED).pack(side='left',padx=15)
